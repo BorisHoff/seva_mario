@@ -1,2 +1,9 @@
+meta:
+  environment: docker
+  toolchain:
+    name: docker
+    version: latest
+build:
+  dockerfile: true
 run:
   containerPort: 8000
