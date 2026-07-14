@@ -1,6 +1,6 @@
 meta:
-  environment: static
-
+  environment: docker
+  toolchain:
+    name: docker
 build:
-  dockerfile: false
-  buildDirectory: .
+  dockerfile: true
