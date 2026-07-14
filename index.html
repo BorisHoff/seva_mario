@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сева на льду: Хоккейные Приключения</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrapper">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <p>Загрузка хоккейной арены...</p>
+    </div>
+
+    <!-- HUD Overlay -->
+    <div id="hud" class="hidden">
+      <div class="hud-group">
+        <div class="hud-item">
+          <span>СЕВА</span>
+          <div class="hud-lives" id="hud-lives">
+            <!-- Hearts will be injected here -->
+          </div>
+        </div>
+        <div class="hud-item" title="Хоккейные шайбы (Патроны)">
+          <div class="hud-puck-icon"></div>
+          <span id="hud-pucks">0</span>
+        </div>
+        <div class="hud-item" title="Кубки Гагарина (Необходимо для финиша)">
+          <span>🏆</span>
+          <span id="hud-cups" style="color: var(--color-accent-blue);">0 / 3</span>
+        </div>
+      </div>
+      
+      <div class="hud-item" style="font-size: 0.85rem; letter-spacing: 0.5px;" id="hud-level-name">
+        Череповец | Ледовый дворец
+      </div>
+
+      <div class="hud-group">
+        <div class="hud-item">
+          <span>СЧЕТ: <span id="hud-score" style="color: var(--color-primary);">000000</span></span>
+        </div>
+        <button class="hud-btn" id="hud-sound" title="Вкл/Выкл звук">🔊</button>
+        <button class="hud-btn" id="hud-pause" title="Пауза">⏸</button>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen" style="justify-content: flex-start; padding-top: 30px; overflow-y: auto;">
+      <h1><span class="yellow">СЕВА</span> НА ЛЬДУ</h1>
+      <h2 style="font-size: 1.1rem; letter-spacing: 3px; margin-top: -25px; margin-bottom: 20px; color: var(--color-text-muted);">ХОККЕЙНЫЕ ПРИКЛЮЧЕНИЯ</h2>
+      
+      <div style="display: flex; justify-content: center; gap: 10px; width: 100%; margin-bottom: 15px;">
+        <button class="btn" id="btn-start" style="padding: 10px 25px; font-size: 1rem;">ИГРАТЬ</button>
+        <button class="btn btn-secondary" id="btn-level-select" style="padding: 10px 25px; font-size: 1rem;">ВЫБОР УРОВНЯ</button>
+        <button class="btn btn-secondary" id="btn-help" style="padding: 10px 25px; font-size: 1rem;">УПРАВЛЕНИЕ</button>
+      </div>
+
+      <!-- Rules Panel (ПРАВИЛА ИГРЫ НА СТАРТОВОМ ЭКРАНЕ) -->
+      <div style="padding: 15px 20px; background: rgba(18, 22, 32, 0.75); border: 1.5px solid var(--color-primary); border-radius: 12px; max-width: 600px; text-align: left; font-size: 0.8rem; line-height: 1.4; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); margin-bottom: 15px;">
+        <h3 style="color: var(--color-primary); text-transform: uppercase; font-style: italic; margin-bottom: 6px; font-weight: 700; text-align: center; font-size: 0.9rem;">Правила игры:</h3>
+        <p style="margin-bottom: 4px;">🏆 **Цель**: Соберите **все 3 Кубка Гагарина** на уровне, чтобы открыть ворота на финише.</p>
+        <p style="margin-bottom: 4px;">🏒 **Стрельба**: Шайбы на льду — это ваши патроны! Запускайте их во врагов кнопкой `F` или `Enter`.</p>
+        <p style="margin-bottom: 4px;">👾 **Супервратари (Боссы)**: В конце каждого уровня стоит огромный злой супервратарь с **6 HP** и шкалой здоровья! Первый раз он отбивает шайбу назад.</p>
+        <p style="margin-bottom: 4px;">🏙️ **Достопримечательности**: Полюбуйтесь на уникальные ориентиры в каждом городе (завод в Череповце, тракторы/зубры в Минске, мечеть в Казани, пагода и стена в Пекине!).</p>
+        <p style="margin-bottom: 0;">🌀 **Бессмертие**: Возьмите значок **Северсталь (Юнити)** для **10 секунд полной неуязвимости**.</p>
+      </div>
+
+      <!-- Credit to Dima Torzok -->
+      <div style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic; letter-spacing: 0.5px;">
+        Субтитры создавал Дима Торзок
+      </div>
+    </div>
+
+    <!-- Level Selection Screen -->
+    <div id="level-select-screen" class="screen hidden" style="padding-top: 20px;">
+      <h2>ВЫБОР ЛЕДОВОЙ АРЕНЫ</h2>
+      
+      <div class="level-grid" style="overflow-x: auto; width: 100%; justify-content: flex-start; padding: 10px 20px; scrollbar-width: thin;">
+        <!-- Level 1 -->
+        <div class="level-card" data-level="0" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_cherepovets.jpg');"></div>
+          <h3>1. Череповец</h3>
+          <p>Ледовый дворец</p>
+          <p style="color: var(--color-primary); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: СКА</p>
+        </div>
+        <!-- Level 2 -->
+        <div class="level-card locked" data-level="1" id="card-lvl-2" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_yaroslavl.jpg');"></div>
+          <h3>2. Ярославль</h3>
+          <p>Арена-2000</p>
+          <p style="color: var(--color-accent-blue); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: Локомотив</p>
+        </div>
+        <!-- Level 3 -->
+        <div class="level-card locked" data-level="2" id="card-lvl-3" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_minsk.jpg');"></div>
+          <h3>3. Минск</h3>
+          <p>Минск-Арена</p>
+          <p style="color: var(--color-accent-blue); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: Динамо Мн</p>
+        </div>
+        <!-- Level 4 -->
+        <div class="level-card locked" data-level="3" id="card-lvl-4" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_spb.jpg');"></div>
+          <h3>4. Санкт-Петербург</h3>
+          <p>СКА Арена</p>
+          <p style="color: var(--color-accent-blue); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: СКА</p>
+        </div>
+        <!-- Level 5 -->
+        <div class="level-card locked" data-level="4" id="card-lvl-5" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_spb.jpg'); filter: hue-rotate(120deg);"></div>
+          <h3>5. Казань</h3>
+          <p>Татнефть Арена</p>
+          <p style="color: var(--color-accent-green); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: Ак Барс</p>
+        </div>
+        <!-- Level 6 -->
+        <div class="level-card locked" data-level="5" id="card-lvl-6" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_moscow.jpg');"></div>
+          <h3>6. Москва</h3>
+          <p>ЦСКА Арена</p>
+          <p style="color: var(--color-accent-red); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: Спартак</p>
+        </div>
+        <!-- Level 7 -->
+        <div class="level-card locked" data-level="6" id="card-lvl-7" style="flex-shrink: 0;">
+          <div class="level-preview" style="background-image: url('assets/background_moscow.jpg'); filter: hue-rotate(-40deg);"></div>
+          <h3>7. Пекин</h3>
+          <p>Шоуганг Арена</p>
+          <p style="color: var(--color-primary); margin-top: 5px; font-weight: 700; font-size: 0.75rem;">Соперник: Драконы</p>
+        </div>
+      </div>
+      
+      <button class="btn btn-secondary" id="btn-level-back">НАЗАД В МЕНЮ</button>
+    </div>
+
+    <!-- Help / Controls Screen -->
+    <div id="help-screen" class="screen hidden">
+      <h2>УПРАВЛЕНИЕ ХОККЕИСТОМ</h2>
+      
+      <div class="controls-layout">
+        <div class="control-item">
+          <div style="display: flex; gap: 5px;">
+            <div class="key-cap">←</div>
+            <div class="key-cap">→</div>
+          </div>
+          <p style="margin-top: 5px; font-weight: 700;">Движение коньками</p>
+          <p style="font-size: 0.8rem; color: var(--color-text-muted); max-width: 200px;">
+            Сева скользит на коньках с инерцией!
+          </p>
+        </div>
+        
+        <div class="control-item">
+          <div class="key-cap">SPACE</div>
+          <p style="margin-top: 5px; font-weight: 700;">Прыжок / Прыгнуть сверху</p>
+          <p style="font-size: 0.8rem; color: var(--color-text-muted); max-width: 200px;">
+            Обычные соперники сбиваются с одного прыжка.
+          </p>
+        </div>
+
+        <div class="control-item">
+          <div style="display: flex; gap: 5px;">
+            <div class="key-cap">F</div>
+            <div class="key-cap">ENTER</div>
+          </div>
+          <p style="margin-top: 5px; font-weight: 700;">Бросок шайбы (Патроны)</p>
+          <p style="font-size: 0.8rem; color: var(--color-text-muted); max-width: 200px;">
+            Стреляйте шайбами во врагов по горизонтали!
+          </p>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 25px; font-size: 0.9rem; max-width: 700px; line-height: 1.5; text-align: left;">
+        <p>🏒 **Шайбы**: Пополняют боезапас для бросков клюшкой. Сделайте их поменьше, чтобы лучше прицеливаться!</p>
+        <p>🛡️ **Вратари**: Начиная со 2 уровня, на льду стоят вратари. Они прочнее обычных хоккеистов — **требуется 2 попадания шайбой** или 2 прыжка на них. В первый раз они отбивают шайбу назад!</p>
+        <p>🏆 **Кубки Гагарина**: Соберите **все 3 кубка** на уровне, чтобы открыть ворота.</p>
+        <p>🌀 **Логотип «Северсталь» (Юнити)**: Ровно один логотип компании Северсталь на уровень. Дает **10 секунд неуязвимости**.</p>
+      </div>
+
+      <button class="btn" id="btn-help-back">ПОНЯТНО</button>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pause-screen" class="screen hidden">
+      <h2>МАТЧ ПРИОСТАНОВЛЕН</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">
+        <button class="btn" id="btn-resume">ПРОДОЛЖИТЬ</button>
+        <button class="btn btn-secondary" id="btn-restart">НАЧАТЬ ЗАНОВО</button>
+        <button class="btn btn-secondary" id="btn-quit">ВЫЙТИ В МЕНЮ</button>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+      <h2 style="color: var(--color-accent-red); font-size: 3rem;">УДАЛЕНИЕ ДО КОНЦА ИГРЫ</h2>
+      <p style="color: var(--color-text-muted); margin-bottom: 20px;">Ваш Сева потерпел поражение...</p>
+      
+      <div class="stat-box">
+        Итоговый счет: <span id="go-score">000000</span>
+      </div>
+
+      <div style="display: flex; gap: 15px;">
+        <button class="btn" id="btn-retry">ПОПЫТАТЬСЯ СНОВА</button>
+        <button class="btn btn-secondary" id="btn-go-menu">В МЕНЮ</button>
+      </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="screen hidden">
+      <div class="trophy-container">🏆</div>
+      <h2 style="color: var(--color-primary); font-size: 3rem;">ПОБЕДНЫЙ МАТЧ!</h2>
+      <p style="color: var(--color-text-muted); margin-bottom: 20px;" id="victory-message">Все кубки собраны!</p>
+      
+      <div class="stat-box">
+        Собрано кубков: <span id="vic-cups">0 / 3</span><br>
+        Итоговый счет: <span id="vic-score">000000</span>
+      </div>
+
+      <div style="display: flex; gap: 15px;">
+        <button class="btn" id="btn-next-level">СЛЕДУЮЩИЙ МАТЧ</button>
+        <button class="btn btn-secondary" id="btn-vic-menu">В МЕНЮ</button>
+      </div>
+    </div>
+
+    <!-- Touch controls overlay -->
+    <div id="touch-controls">
+      <div class="touch-left-group">
+        <button class="touch-btn" id="touch-left">←</button>
+        <button class="touch-btn" id="touch-right">→</button>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <button class="touch-btn" id="touch-shoot" style="background: rgba(0, 229, 255, 0.4); border-color: var(--color-accent-blue);">🏒</button>
+        <button class="touch-btn" id="touch-jump">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

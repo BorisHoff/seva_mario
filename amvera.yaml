@@ -1,0 +1,6 @@
+meta:
+  environment: static
+
+build:
+  dockerfile: false
+  buildDirectory: .
