@@ -4,3 +4,5 @@ meta:
     name: docker
 build:
   dockerfile: true
+run:
+  containerPort: 8000
